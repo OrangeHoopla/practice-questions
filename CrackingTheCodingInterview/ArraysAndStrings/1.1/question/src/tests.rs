@@ -2,17 +2,18 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::sqrt;
+    use crate::is_unique;
 
     #[test]
-    fn this_test_will_pass() {
-        let value = sqrt(9.0);
-        assert_eq!(value.unwrap(), 3.0);
+    fn true_result() {
+        let value = is_unique("word".to_owned());
+        assert_eq!(value.unwrap(), true);
     }
 
     #[test]
-    fn this_test_will_fail() {
-        let value = sqrt(9.0);
-        assert_eq!(value.unwrap(), 5.0);
+    fn false_result() {
+        let value = is_unique("TATTLE".to_owned());
+        assert_ne!(value.unwrap(), true);
     }
+
 }

@@ -1,1 +1,1 @@
-/Users/orange/practice-questions/rust-template/question/target/debug/question: /Users/orange/practice-questions/rust-template/question/src/main.rs /Users/orange/practice-questions/rust-template/question/src/tests.rs
+/Users/orange/practice-questions/CrackingTheCodingInterview/ArraysAndStrings/1.1/question/target/debug/question: /Users/orange/practice-questions/CrackingTheCodingInterview/ArraysAndStrings/1.1/question/src/main.rs /Users/orange/practice-questions/CrackingTheCodingInterview/ArraysAndStrings/1.1/question/src/tests.rs
