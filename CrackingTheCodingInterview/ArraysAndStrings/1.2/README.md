@@ -5,4 +5,4 @@
 
 [![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
 
-Determine if string has all unique 
+Given two strings determine if one is the permutation of the other
