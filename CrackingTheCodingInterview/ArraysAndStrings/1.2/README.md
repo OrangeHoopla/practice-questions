@@ -1,5 +1,5 @@
-# Cracking the Coding Question 1.1
-## is Unique
+# Cracking the Coding Question 1.2
+## Permutation
 
 ![alt text](https://github.com/OrangeHoopla/practice-questions/blob/main/CrackingTheCodingInterview/ArraysAndStrings/1.2/Q1.2.png "Logo Title Text 1")
 
