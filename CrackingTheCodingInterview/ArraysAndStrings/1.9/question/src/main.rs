@@ -14,6 +14,8 @@ pub fn is_substring(val1: &str,val2: &str) -> Result<bool,String> {
 
 
     let temp = "nothing";
+
+    
     if tmp.contains(val1) {
         Ok(true)
     }

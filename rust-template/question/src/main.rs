@@ -11,4 +11,5 @@ pub fn sqrt(number: f64) -> Result<f64, String> {
     } else {
         Err("negative floats don't have square roots".to_owned())
     }
+    // maybe include the template here
 }
