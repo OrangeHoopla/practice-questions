@@ -1,21 +1,20 @@
-use rayon::iter::{plumbing::{bridge, Consumer, Producer, ProducerCallback, UnindexedConsumer}, IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
-
+use rayon::iter::{
+    plumbing::{bridge, Consumer, Producer, ProducerCallback, UnindexedConsumer},
+    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
+};
 
 pub mod tests;
 
 fn main() {
-    let mut data = DataCollection{
-      data : vec![1, 2, 3, 4]
+    let mut data = DataCollection {
+        data: vec![1, 2, 3, 4],
     };
     println!("Quade");
 
     // println!("data = {:?}", data);
 
-    let sum_of_squares: Data = data
-      .par_iter()
-      .map(|x| x * x)
-      .sum();
-      
+    let sum_of_squares: Data = data.par_iter().map(|x| x * x).sum();
+
     println!("sum = {}", sum_of_squares);
 }
 
@@ -28,14 +27,13 @@ pub fn sqrt(number: f64) -> Result<f64, String> {
     // maybe include the template here
 }
 
-
 type Data = i32;
 
 struct DataCollection {
-  data : Vec<Data>,
+    data: Vec<Data>,
 }
 struct ParDataIter<'a> {
-  data_slice : &'a [Data]
+    data_slice: &'a [Data],
 }
 
 impl<'a> ParallelIterator for ParDataIter<'a> {
@@ -43,26 +41,24 @@ impl<'a> ParallelIterator for ParDataIter<'a> {
 
     fn drive_unindexed<C>(self, consumer: C) -> C::Result
     where
-        C: UnindexedConsumer<Self::Item> {
-        bridge(self,consumer)
+        C: UnindexedConsumer<Self::Item>,
+    {
+        bridge(self, consumer)
     }
 
     fn opt_len(&self) -> Option<usize> {
-      Some(self.len())
+        Some(self.len())
     }
 }
 
 impl<'a> IndexedParallelIterator for ParDataIter<'a> {
-    fn with_producer<CB: ProducerCallback<Self::Item>>(
-        self,
-        callback: CB,
-    ) -> CB::Output {
+    fn with_producer<CB: ProducerCallback<Self::Item>>(self, callback: CB) -> CB::Output {
         let producer = DataProducer::from(self);
         callback.callback(producer)
     }
 
     fn drive<C: Consumer<Self::Item>>(self, consumer: C) -> C::Result {
-        bridge(self,consumer)
+        bridge(self, consumer)
     }
 
     fn len(&self) -> usize {
@@ -71,7 +67,7 @@ impl<'a> IndexedParallelIterator for ParDataIter<'a> {
 }
 
 struct DataProducer<'a> {
-  data_slice : &'a [Data],
+    data_slice: &'a [Data],
 }
 
 impl<'a> Producer for DataProducer<'a> {
@@ -119,19 +115,19 @@ impl<'a> From<ParDataIter<'a>> for DataProducer<'a> {
 
 impl DataCollection {
     pub fn parallel_iterator(&self) -> ParDataIter {
-    ParDataIter {
-      data_slice : &self.data,
+        ParDataIter {
+            data_slice: &self.data,
+        }
     }
-  }
 }
-
 
 impl<'a> IntoParallelIterator for &'a DataCollection {
     type Iter = ParDataIter<'a>;
     type Item = &'a Data;
 
     fn into_par_iter(self) -> Self::Iter {
-        ParDataIter { data_slice: &self.data }
+        ParDataIter {
+            data_slice: &self.data,
+        }
     }
 }
-

@@ -1,5 +1,7 @@
-use rayon::iter::{plumbing::{bridge, Consumer, ProducerCallback, UnindexedConsumer}, IndexedParallelIterator, ParallelIterator};
-
+use rayon::iter::{
+    plumbing::{bridge, Consumer, ProducerCallback, UnindexedConsumer},
+    IndexedParallelIterator, ParallelIterator,
+};
 
 //TODO place rayon image code here
 #[cfg(test)]
@@ -21,7 +23,7 @@ mod tests {
 //https://geo-ant.github.io/blog/2022/implementing-parallel-iterators-rayon/
 type Data = i32;
 struct ParDataIter<'a> {
-  data_slice : &'a [Data]
+    data_slice: &'a [Data],
 }
 
 impl<'a> ParallelIterator for ParDataIter<'a> {
@@ -29,25 +31,23 @@ impl<'a> ParallelIterator for ParDataIter<'a> {
 
     fn drive_unindexed<C>(self, consumer: C) -> C::Result
     where
-        C: UnindexedConsumer<Self::Item> {
-        bridge(self,consumer)
+        C: UnindexedConsumer<Self::Item>,
+    {
+        bridge(self, consumer)
     }
 
     fn opt_len(&self) -> Option<usize> {
-      Some(self.len())
+        Some(self.len())
     }
 }
 
 impl<'a> IndexedParallelIterator for ParDataIter<'a> {
-    fn with_producer<CB: ProducerCallback<Self::Item>>(
-        self,
-        callback: CB,
-    ) -> CB::Output {
+    fn with_producer<CB: ProducerCallback<Self::Item>>(self, callback: CB) -> CB::Output {
         todo!()
     }
 
     fn drive<C: Consumer<Self::Item>>(self, consumer: C) -> C::Result {
-        bridge(self,consumer)
+        bridge(self, consumer)
     }
 
     fn len(&self) -> usize {
@@ -56,6 +56,5 @@ impl<'a> IndexedParallelIterator for ParDataIter<'a> {
 }
 
 struct DataProducer<'a> {
-  data_slice : &'a [Data],
+    data_slice: &'a [Data],
 }
-
