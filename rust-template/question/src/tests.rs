@@ -1,5 +1,5 @@
 
-
+//TODO place rayon image code here
 #[cfg(test)]
 mod tests {
     use crate::sqrt;
