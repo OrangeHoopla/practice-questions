@@ -1,1 +1,1 @@
-/Users/orange/practice-questions/rust-template/question/target/debug/question: /Users/orange/practice-questions/rust-template/question/src/main.rs /Users/orange/practice-questions/rust-template/question/src/tests.rs
+/home/orange/Projects/Rust-fun/practice-questions/rust-template/question/target/debug/question: /home/orange/Projects/Rust-fun/practice-questions/rust-template/question/src/main.rs /home/orange/Projects/Rust-fun/practice-questions/rust-template/question/src/tests.rs

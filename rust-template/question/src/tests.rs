@@ -1,3 +1,5 @@
+use rayon::iter::{plumbing::{bridge, Consumer, ProducerCallback, UnindexedConsumer}, IndexedParallelIterator, ParallelIterator};
+
 
 //TODO place rayon image code here
 #[cfg(test)]
@@ -17,7 +19,7 @@ mod tests {
     }
 }
 //https://geo-ant.github.io/blog/2022/implementing-parallel-iterators-rayon/
-
+type Data = i32;
 struct ParDataIter<'a> {
   data_slice : &'a [Data]
 }
