@@ -1,21 +1,39 @@
-use rayon::iter::{
+use image::{DynamicImage, ImageBuffer, Luma, Rgb};
+use rayon::{iter::{
     plumbing::{bridge, Consumer, Producer, ProducerCallback, UnindexedConsumer},
     IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
-};
+}, slice::ParallelSlice};
 
 pub mod tests;
 
 fn main() {
-    let mut data = DataCollection {
+    let mut _data = DataCollection {
         data: vec![1, 2, 3, 4],
     };
-    println!("Quade");
+    // println!("Quade");
 
-    // println!("data = {:?}", data);
+    // // println!("data = {:?}", data);
 
-    let sum_of_squares: Data = data.par_iter().map(|x| x * x).sum();
+    // let sum_of_squares: Data = data.par_iter().map(|x| x * x).sum();
 
-    println!("sum = {}", sum_of_squares);
+    // println!("sum = {}", sum_of_squares);
+
+    let mut img: ImageBuffer<Luma<u16>, Vec<u16>> = ImageBuffer::new(50, 1);
+    img.put_pixel(0, 0, Luma([150]));
+
+    let mut iter = img.chunks_mut(7);
+    let a = iter.next().unwrap();
+    let mut b = iter.next().unwrap();
+    for i in b {
+        *i = 12 as u16;
+    }
+
+    print!("{:?} ", a);
+    // println!("{:?} ", b);
+    let mut res = img.par_chunks(1).for_each(|x| println!("{:?}",x));
+
+
+
 }
 
 pub fn sqrt(number: f64) -> Result<f64, String> {
