@@ -1,10 +1,12 @@
+use std::time::Instant;
+
 use image::{DynamicImage, ImageBuffer, Luma, Rgb};
 use rayon::{
     iter::{
         plumbing::{bridge, Consumer, Producer, ProducerCallback, UnindexedConsumer},
         IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
     },
-    slice::ParallelSlice,
+    slice::{ParallelSlice, ParallelSliceMut},
 };
 
 pub mod tests;
@@ -21,7 +23,7 @@ fn main() {
 
     // println!("sum = {}", sum_of_squares);
 
-    let mut img: ImageBuffer<Luma<u16>, Vec<u16>> = ImageBuffer::new(50, 1);
+    let mut img: ImageBuffer<Luma<u16>, Vec<u16>> = ImageBuffer::new(4000, 4000);
     img.put_pixel(0, 0, Luma([150]));
 
     let mut iter = img.chunks_mut(7);
@@ -32,9 +34,16 @@ fn main() {
     }
     
 
-    print!("{:?} ", a);
+    // print!("{:?} ", a);
     // println!("{:?} ", b);
-    let mut res = img.par_chunks(1).for_each(|x| println!("{:?}", x));
+    let start = Instant::now();
+    let mut res = img.par_chunks_exact_mut(1)
+    .for_each(| x: &mut [u16]| { x[0] = x[0] + 2; });
+    let duration = start.elapsed();
+
+    let test = img.get_pixel(12, 12);
+    println!("{:?}", test);
+    println!("Test 'my_timed_test' took: {:?}", duration);
 }
 
 pub fn sqrt(number: f64) -> Result<f64, String> {
