@@ -30,6 +30,7 @@ fn main() {
     for i in b {
         *i = 12 as u16;
     }
+    
 
     print!("{:?} ", a);
     // println!("{:?} ", b);
