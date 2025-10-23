@@ -1,8 +1,11 @@
 use image::{DynamicImage, ImageBuffer, Luma, Rgb};
-use rayon::{iter::{
-    plumbing::{bridge, Consumer, Producer, ProducerCallback, UnindexedConsumer},
-    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
-}, slice::ParallelSlice};
+use rayon::{
+    iter::{
+        plumbing::{bridge, Consumer, Producer, ProducerCallback, UnindexedConsumer},
+        IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
+    },
+    slice::ParallelSlice,
+};
 
 pub mod tests;
 
@@ -30,10 +33,7 @@ fn main() {
 
     print!("{:?} ", a);
     // println!("{:?} ", b);
-    let mut res = img.par_chunks(1).for_each(|x| println!("{:?}",x));
-
-
-
+    let mut res = img.par_chunks(1).for_each(|x| println!("{:?}", x));
 }
 
 pub fn sqrt(number: f64) -> Result<f64, String> {
