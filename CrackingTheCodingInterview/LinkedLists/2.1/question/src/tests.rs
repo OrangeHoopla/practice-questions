@@ -8,6 +8,8 @@ mod tests {
         assert_eq!(value.unwrap(), true);
     }
 
+
+    
     #[test]
     fn false_result() {
         let value = is_unique("TATTLE".to_owned());

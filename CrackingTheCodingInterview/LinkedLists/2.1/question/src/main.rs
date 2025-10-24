@@ -7,7 +7,6 @@ fn main() {
 
 //Assumming ASCII
 pub fn is_unique(value: String) -> Result<bool, String> {
-    use std::collections::LinkedList;
 
     let list = LinkedList::from([1, 2, 3]);
 
