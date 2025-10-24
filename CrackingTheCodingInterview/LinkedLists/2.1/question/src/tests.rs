@@ -1,5 +1,3 @@
-
-
 #[cfg(test)]
 mod tests {
     use crate::is_unique;
@@ -15,5 +13,4 @@ mod tests {
         let value = is_unique("TATTLE".to_owned());
         assert_ne!(value.unwrap(), true);
     }
-
 }
