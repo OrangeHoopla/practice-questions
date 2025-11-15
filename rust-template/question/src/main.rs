@@ -10,7 +10,8 @@ use rayon::{
 };
 
 pub mod tests;
-
+// not to self start writing code for watershed algorthym 
+// https://docs.opencv.org/4.x/d3/db4/tutorial_py_watershed.html
 fn main() {
     let mut _data = DataCollection {
         data: vec![1, 2, 3, 4],
