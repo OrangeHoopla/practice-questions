@@ -63,6 +63,7 @@ fn main() {
         // Set the pixel in the new RGB image
         rgb_image.put_pixel(x, y, rgb_pixel);
     }
+    
     let _ = rgb_image.save("connected.png");
 
 
