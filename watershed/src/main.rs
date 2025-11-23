@@ -78,7 +78,7 @@ fn diff(minuend: &GrayImage, subtrahend: &GrayImage) -> GrayImage {
     for (x, y, pixel) in subtrahend.enumerate_pixels() {
 
         let luma_value = pixel[0]; // Luma pixels have one channel
-        if(luma_value > 0) {
+        if luma_value > 0 {
             let minuend_pix = minuend.get_pixel(x, y);
 
             let new_pixel = minuend_pix[0] - luma_value;
