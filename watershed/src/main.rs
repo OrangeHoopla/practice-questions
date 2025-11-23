@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use image::{ImageBuffer, Luma, Rgb, open};
+use image::{GenericImageView, GrayImage, ImageBuffer, Luma, Rgb, open};
 use imageproc::{contrast::{ThresholdType, otsu_level, threshold}, distance_transform::{Norm, distance_transform}, morphology::{Mask, dilate, grayscale_open}, region_labelling::connected_components};
 use rand::Rng;
 
@@ -36,27 +36,27 @@ fn main() {
     // foreground
     let foreground = threshold(&distance, max/2, ThresholdType::Binary);
     let _ = foreground.save("foreground.png");
+
+    let unknown = diff(&sure, &foreground);
+    let _ = unknown.save("unknown.png");
     
 
     let background_color = Luma([155u8]);
     let connected = connected_components(&foreground, imageproc::region_labelling::Connectivity::Eight, background_color);
 
+
     let mut rgb_image = ImageBuffer::new(connected.width(), connected.height());
-
     let mut color_map: HashMap<u32, [u8; 3]> = HashMap::new();
-    color_map.insert(33, [0,0,0]);
-
+    color_map.insert(1, [0,0,0]);
     let mut rng = rand::rng();
 
-
-    for i in 1..30 { // Iterates 1, 2, 3, 4
+    for i in 2..30 { // random map of colors
             color_map.insert(i, [rng.random_range(1..=254),rng.random_range(1..=254),rng.random_range(1..=254)]);
         }
 
     // Iterate through Luma pixels and convert to RGB
     for (x, y, pixel) in connected.enumerate_pixels() {
         let luma_value = pixel[0]; // Luma pixels have one channel
-
         // Create an Rgb pixel where R, G, and B are all the luma value
         let rgb_pixel: Rgb<u8> = Rgb(*color_map.get(&pixel[0]).unwrap());
 
@@ -70,4 +70,24 @@ fn main() {
 
     //https://www.geeksforgeeks.org/computer-vision/image-segmentation-with-watershed-algorithm-opencv-python/
     
+}
+
+fn diff(minuend: &GrayImage, subtrahend: &GrayImage) -> GrayImage {
+    let mut out = minuend.clone();
+    
+    for (x, y, pixel) in subtrahend.enumerate_pixels() {
+
+        let luma_value = pixel[0]; // Luma pixels have one channel
+        if(luma_value > 0) {
+            let minuend_pix = minuend.get_pixel(x, y);
+
+            let new_pixel = minuend_pix[0] - luma_value;
+
+
+            out.put_pixel(x, y, Luma([new_pixel]));
+        }
+
+    }
+
+    out
 }
