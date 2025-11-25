@@ -44,6 +44,9 @@ fn main() {
     let background_color = Luma([155u8]);
     let connected = connected_components(&foreground, imageproc::region_labelling::Connectivity::Eight, background_color);
 
+    let demo = aaa(&connected, &unknown);
+    let _ = demo.save("demo.png");
+
 
     let mut rgb_image = ImageBuffer::new(connected.width(), connected.height());
     let mut color_map: HashMap<u32, [u8; 3]> = HashMap::new();
@@ -58,7 +61,8 @@ fn main() {
     for (x, y, pixel) in connected.enumerate_pixels() {
         let luma_value = pixel[0]; // Luma pixels have one channel
         // Create an Rgb pixel where R, G, and B are all the luma value
-        let rgb_pixel: Rgb<u8> = Rgb(*color_map.get(&pixel[0]).unwrap());
+        let rgb_pixel: Luma<u8> = Luma([luma_value.try_into().unwrap()]);
+        // let rgb_pixel: Rgb<u8> = Rgb(*color_map.get(&pixel[0]).unwrap());
 
         // Set the pixel in the new RGB image
         rgb_image.put_pixel(x, y, rgb_pixel);
@@ -90,4 +94,27 @@ fn diff(minuend: &GrayImage, subtrahend: &GrayImage) -> GrayImage {
     }
 
     out
+}
+
+
+fn aaa(minuend: &ImageBuffer<Luma<u32>, Vec<u32>>, subtrahend: &GrayImage) -> GrayImage {
+    let mut out: ImageBuffer<Luma<u8>, Vec<u8>> = ImageBuffer::new(minuend.width(), minuend.height());
+
+    for (x, y, pixel) in minuend.enumerate_pixels() {
+
+        let luma_value = pixel[0]; // Luma pixels have one channel
+        let wow = subtrahend.get_pixel(x, y)[0];
+
+        if wow > 0 {
+
+            out.put_pixel(x, y, Luma([0]));
+        }
+        else {
+            out.put_pixel(x, y, Luma([pixel[0].try_into().unwrap()]));
+        }
+
+    }
+
+    out
+
 }
