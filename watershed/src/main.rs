@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use image::{GenericImageView, GrayImage, ImageBuffer, Luma, Rgb, open};
+use image::{DynamicImage, GrayImage, ImageBuffer, Luma, open};
 use imageproc::{contrast::{ThresholdType, otsu_level, threshold}, distance_transform::{Norm, distance_transform}, morphology::{Mask, dilate, grayscale_open}, region_labelling::connected_components};
 use rand::Rng;
 
@@ -44,31 +44,9 @@ fn main() {
     let background_color = Luma([155u8]);
     let connected = connected_components(&foreground, imageproc::region_labelling::Connectivity::Eight, background_color);
 
-    let demo = aaa(&connected, &unknown);
-    let _ = demo.save("demo.png");
+    let connected_unknown = aaa(&connected, &unknown);
+    let _ = connected_unknown.save("connected_unknown.png");
 
-
-    let mut rgb_image = ImageBuffer::new(connected.width(), connected.height());
-    let mut color_map: HashMap<u32, [u8; 3]> = HashMap::new();
-    color_map.insert(1, [0,0,0]);
-    let mut rng = rand::rng();
-
-    for i in 2..30 { // random map of colors
-            color_map.insert(i, [rng.random_range(1..=254),rng.random_range(1..=254),rng.random_range(1..=254)]);
-        }
-
-    // Iterate through Luma pixels and convert to RGB
-    for (x, y, pixel) in connected.enumerate_pixels() {
-        let luma_value = pixel[0]; // Luma pixels have one channel
-        // Create an Rgb pixel where R, G, and B are all the luma value
-        let rgb_pixel: Luma<u8> = Luma([luma_value.try_into().unwrap()]);
-        // let rgb_pixel: Rgb<u8> = Rgb(*color_map.get(&pixel[0]).unwrap());
-
-        // Set the pixel in the new RGB image
-        rgb_image.put_pixel(x, y, rgb_pixel);
-    }
-    
-    let _ = rgb_image.save("connected.png");
 
 
 
@@ -102,7 +80,6 @@ fn aaa(minuend: &ImageBuffer<Luma<u32>, Vec<u32>>, subtrahend: &GrayImage) -> Gr
 
     for (x, y, pixel) in minuend.enumerate_pixels() {
 
-        let luma_value = pixel[0]; // Luma pixels have one channel
         let wow = subtrahend.get_pixel(x, y)[0];
 
         if wow > 0 {
@@ -118,3 +95,47 @@ fn aaa(minuend: &ImageBuffer<Luma<u32>, Vec<u32>>, subtrahend: &GrayImage) -> Gr
     out
 
 }
+
+struct WSNode
+{
+    next: i32,
+    mask_ofs: i32,
+    img_ofs: i32
+}
+
+
+
+fn _watershed(_src: DynamicImage,_markers:  ImageBuffer<Luma<u8>, Vec<u8>>) {
+
+    const IN_QUEUE: i32 = -2;
+    const WSHED: i32 = -1;
+    const NQ: i32 = 256;
+
+    let size = (_src.width(),_src.height());
+
+    let mut storage: Vec<WSNode> = Vec::new();
+
+}
+
+
+    // let mut rgb_image = ImageBuffer::new(connected.width(), connected.height());
+    // let mut color_map: HashMap<u32, [u8; 3]> = HashMap::new();
+    // color_map.insert(1, [0,0,0]);
+    // let mut rng = rand::rng();
+
+    // for i in 2..30 { // random map of colors
+    //         color_map.insert(i, [rng.random_range(1..=254),rng.random_range(1..=254),rng.random_range(1..=254)]);
+    //     }
+
+    // // Iterate through Luma pixels and convert to RGB
+    // for (x, y, pixel) in connected.enumerate_pixels() {
+    //     let luma_value = pixel[0]; // Luma pixels have one channel
+    //     // Create an Rgb pixel where R, G, and B are all the luma value
+    //     let rgb_pixel: Luma<u8> = Luma([luma_value.try_into().unwrap()]);
+    //     // let rgb_pixel: Rgb<u8> = Rgb(*color_map.get(&pixel[0]).unwrap());
+
+    //     // Set the pixel in the new RGB image
+    //     rgb_image.put_pixel(x, y, rgb_pixel);
+    // }
+    
+    // let _ = rgb_image.save("connected.png");
