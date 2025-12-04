@@ -44,13 +44,16 @@ fn main() {
     let background_color = Luma([155u8]);
     let connected = connected_components(&foreground, imageproc::region_labelling::Connectivity::Eight, background_color);
 
-    let connected_unknown = aaa(&connected, &unknown);
+    let connected_unknown = diff_zero(&connected, &unknown);
     let _ = connected_unknown.save("connected_unknown.png");
 
 
 
 
+
+
     //https://www.geeksforgeeks.org/computer-vision/image-segmentation-with-watershed-algorithm-opencv-python/
+    //https://github.com/opencv/opencv/blob/b1d75bf477e77373b420d31ddf36709c0907dd32/modules/imgproc/src/segmentation.cpp#L88
     
 }
 
@@ -74,8 +77,10 @@ fn diff(minuend: &GrayImage, subtrahend: &GrayImage) -> GrayImage {
     out
 }
 
-
-fn aaa(minuend: &ImageBuffer<Luma<u32>, Vec<u32>>, subtrahend: &GrayImage) -> GrayImage {
+/**
+ * Sets any pixel on minuend to zero for pixels that are above zero for subtrahend
+ */
+fn diff_zero(minuend: &ImageBuffer<Luma<u32>, Vec<u32>>, subtrahend: &GrayImage) -> GrayImage {
     let mut out: ImageBuffer<Luma<u8>, Vec<u8>> = ImageBuffer::new(minuend.width(), minuend.height());
 
     for (x, y, pixel) in minuend.enumerate_pixels() {
@@ -103,18 +108,35 @@ struct WSNode
     img_ofs: i32
 }
 
+const IN_QUEUE: i32 = -2;
+const WSHED: i32 = -1;
+const NQ: i32 = 256;
 
 
 fn _watershed(_src: DynamicImage,_markers:  ImageBuffer<Luma<u8>, Vec<u8>>) {
 
-    const IN_QUEUE: i32 = -2;
-    const WSHED: i32 = -1;
-    const NQ: i32 = 256;
 
     let size = (_src.width(),_src.height());
 
     let mut storage: Vec<WSNode> = Vec::new();
+    let free_node = 0;
+    let node = 0;
+    let mut queue: Vec<WSNode> = Vec::new();
 
+    let mut db: i32;
+    let mut dg: i32;
+    let mut dr: i32;
+
+    let mut subs_tab: [i32; 512] = [0;512];
+
+    println!("{}", subs_tab.len());
+
+
+}
+
+fn ws_max(a: i32,b: i32, subs_tab: [i32; 512]) -> i32 {
+
+    b + subs_tab[(usize)(a)-(b)+NQ]
 }
 
 
