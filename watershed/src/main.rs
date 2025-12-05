@@ -47,6 +47,8 @@ fn main() {
     let connected_unknown = diff_zero(&connected, &unknown);
     let _ = connected_unknown.save("connected_unknown.png");
 
+    watershed(img, connected_unknown);
+
 
 
 
@@ -113,7 +115,7 @@ const WSHED: i32 = -1;
 const NQ: i32 = 256;
 
 
-fn _watershed(_src: DynamicImage,_markers:  ImageBuffer<Luma<u8>, Vec<u8>>) {
+fn watershed(_src: DynamicImage,_markers:  ImageBuffer<Luma<u8>, Vec<u8>>) {
 
 
     let size = (_src.width(),_src.height());
@@ -136,7 +138,14 @@ fn _watershed(_src: DynamicImage,_markers:  ImageBuffer<Luma<u8>, Vec<u8>>) {
 
 fn ws_max(a: i32,b: i32, subs_tab: [i32; 512]) -> i32 {
 
-    b + subs_tab[(usize)(a)-(b)+NQ]
+    let index: usize = ((a)-(b)+NQ).try_into().unwrap();
+    b + subs_tab[index]
+}
+
+fn ws_min(a: i32,b: i32, subs_tab: [i32; 512]) -> i32 {
+
+    let index: usize = ((a)-(b)+NQ).try_into().unwrap();
+    a - subs_tab[index]
 }
 
 
