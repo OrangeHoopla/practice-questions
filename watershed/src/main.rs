@@ -1,7 +1,12 @@
 use std::collections::HashMap;
 
 use image::{DynamicImage, GrayImage, ImageBuffer, Luma, open};
-use imageproc::{contrast::{ThresholdType, otsu_level, threshold}, distance_transform::{Norm, distance_transform}, morphology::{Mask, dilate, grayscale_open}, region_labelling::connected_components};
+use imageproc::{
+    contrast::{ThresholdType, otsu_level, threshold},
+    distance_transform::{Norm, distance_transform},
+    morphology::{Mask, dilate, grayscale_open},
+    region_labelling::connected_components,
+};
 use rand::Rng;
 
 fn main() {
@@ -29,51 +34,49 @@ fn main() {
     let _ = sure.save("sure.png");
 
     // apply dilate
-    let distance = distance_transform(&morph, Norm::L2, imageproc::distance_transform::DistanceFrom::Background);
+    let distance = distance_transform(
+        &morph,
+        Norm::L2,
+        imageproc::distance_transform::DistanceFrom::Background,
+    );
     let _ = distance.save("distance.png");
 
-    let max = distance.iter().fold(std::u8::MIN, |a,b| a.max(*b));
+    let max = distance.iter().fold(std::u8::MIN, |a, b| a.max(*b));
     // foreground
-    let foreground = threshold(&distance, max/2, ThresholdType::Binary);
+    let foreground = threshold(&distance, max / 2, ThresholdType::Binary);
     let _ = foreground.save("foreground.png");
 
     let unknown = diff(&sure, &foreground);
     let _ = unknown.save("unknown.png");
-    
 
     let background_color = Luma([155u8]);
-    let connected = connected_components(&foreground, imageproc::region_labelling::Connectivity::Eight, background_color);
+    let connected = connected_components(
+        &foreground,
+        imageproc::region_labelling::Connectivity::Eight,
+        background_color,
+    );
 
     let connected_unknown = diff_zero(&connected, &unknown);
     let _ = connected_unknown.save("connected_unknown.png");
 
     watershed(img, connected_unknown);
 
-
-
-
-
-
     //https://www.geeksforgeeks.org/computer-vision/image-segmentation-with-watershed-algorithm-opencv-python/
     //https://github.com/opencv/opencv/blob/b1d75bf477e77373b420d31ddf36709c0907dd32/modules/imgproc/src/segmentation.cpp#L88
-    
 }
 
 fn diff(minuend: &GrayImage, subtrahend: &GrayImage) -> GrayImage {
     let mut out = minuend.clone();
-    
-    for (x, y, pixel) in subtrahend.enumerate_pixels() {
 
+    for (x, y, pixel) in subtrahend.enumerate_pixels() {
         let luma_value = pixel[0]; // Luma pixels have one channel
         if luma_value > 0 {
             let minuend_pix = minuend.get_pixel(x, y);
 
             let new_pixel = minuend_pix[0] - luma_value;
 
-
             out.put_pixel(x, y, Luma([new_pixel]));
         }
-
     }
 
     out
@@ -83,42 +86,34 @@ fn diff(minuend: &GrayImage, subtrahend: &GrayImage) -> GrayImage {
  * Sets any pixel on minuend to zero for pixels that are above zero for subtrahend
  */
 fn diff_zero(minuend: &ImageBuffer<Luma<u32>, Vec<u32>>, subtrahend: &GrayImage) -> GrayImage {
-    let mut out: ImageBuffer<Luma<u8>, Vec<u8>> = ImageBuffer::new(minuend.width(), minuend.height());
+    let mut out: ImageBuffer<Luma<u8>, Vec<u8>> =
+        ImageBuffer::new(minuend.width(), minuend.height());
 
     for (x, y, pixel) in minuend.enumerate_pixels() {
-
         let wow = subtrahend.get_pixel(x, y)[0];
 
         if wow > 0 {
-
             out.put_pixel(x, y, Luma([0]));
-        }
-        else {
+        } else {
             out.put_pixel(x, y, Luma([pixel[0].try_into().unwrap()]));
         }
-
     }
 
     out
-
 }
 
-struct WSNode
-{
+struct WSNode {
     next: i32,
     mask_ofs: i32,
-    img_ofs: i32
+    img_ofs: i32,
 }
 
 const IN_QUEUE: i32 = -2;
 const WSHED: i32 = -1;
 const NQ: i32 = 256;
 
-
-fn watershed(_src: DynamicImage,_markers:  ImageBuffer<Luma<u8>, Vec<u8>>) {
-
-
-    let size = (_src.width(),_src.height());
+fn watershed(_src: DynamicImage, _markers: ImageBuffer<Luma<u8>, Vec<u8>>) {
+    let size = (_src.width(), _src.height());
 
     let mut storage: Vec<WSNode> = Vec::new();
     let free_node = 0;
@@ -129,44 +124,39 @@ fn watershed(_src: DynamicImage,_markers:  ImageBuffer<Luma<u8>, Vec<u8>>) {
     let mut dg: i32;
     let mut dr: i32;
 
-    let mut subs_tab: [i32; 512] = [0;512];
+    let mut subs_tab: [i32; 512] = [0; 512];
 
     println!("{}", subs_tab.len());
-
-
 }
 
-fn ws_max(a: i32,b: i32, subs_tab: [i32; 512]) -> i32 {
-
-    let index: usize = ((a)-(b)+NQ).try_into().unwrap();
+fn ws_max(a: i32, b: i32, subs_tab: [i32; 512]) -> i32 {
+    let index: usize = ((a) - (b) + NQ).try_into().unwrap();
     b + subs_tab[index]
 }
 
-fn ws_min(a: i32,b: i32, subs_tab: [i32; 512]) -> i32 {
-
-    let index: usize = ((a)-(b)+NQ).try_into().unwrap();
+fn ws_min(a: i32, b: i32, subs_tab: [i32; 512]) -> i32 {
+    let index: usize = ((a) - (b) + NQ).try_into().unwrap();
     a - subs_tab[index]
 }
 
+// let mut rgb_image = ImageBuffer::new(connected.width(), connected.height());
+// let mut color_map: HashMap<u32, [u8; 3]> = HashMap::new();
+// color_map.insert(1, [0,0,0]);
+// let mut rng = rand::rng();
 
-    // let mut rgb_image = ImageBuffer::new(connected.width(), connected.height());
-    // let mut color_map: HashMap<u32, [u8; 3]> = HashMap::new();
-    // color_map.insert(1, [0,0,0]);
-    // let mut rng = rand::rng();
+// for i in 2..30 { // random map of colors
+//         color_map.insert(i, [rng.random_range(1..=254),rng.random_range(1..=254),rng.random_range(1..=254)]);
+//     }
 
-    // for i in 2..30 { // random map of colors
-    //         color_map.insert(i, [rng.random_range(1..=254),rng.random_range(1..=254),rng.random_range(1..=254)]);
-    //     }
+// // Iterate through Luma pixels and convert to RGB
+// for (x, y, pixel) in connected.enumerate_pixels() {
+//     let luma_value = pixel[0]; // Luma pixels have one channel
+//     // Create an Rgb pixel where R, G, and B are all the luma value
+//     let rgb_pixel: Luma<u8> = Luma([luma_value.try_into().unwrap()]);
+//     // let rgb_pixel: Rgb<u8> = Rgb(*color_map.get(&pixel[0]).unwrap());
 
-    // // Iterate through Luma pixels and convert to RGB
-    // for (x, y, pixel) in connected.enumerate_pixels() {
-    //     let luma_value = pixel[0]; // Luma pixels have one channel
-    //     // Create an Rgb pixel where R, G, and B are all the luma value
-    //     let rgb_pixel: Luma<u8> = Luma([luma_value.try_into().unwrap()]);
-    //     // let rgb_pixel: Rgb<u8> = Rgb(*color_map.get(&pixel[0]).unwrap());
+//     // Set the pixel in the new RGB image
+//     rgb_image.put_pixel(x, y, rgb_pixel);
+// }
 
-    //     // Set the pixel in the new RGB image
-    //     rgb_image.put_pixel(x, y, rgb_pixel);
-    // }
-    
-    // let _ = rgb_image.save("connected.png");
+// let _ = rgb_image.save("connected.png");
