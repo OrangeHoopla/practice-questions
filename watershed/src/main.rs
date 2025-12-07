@@ -59,7 +59,9 @@ fn main() {
     let connected_unknown = diff_zero(&connected, &unknown);
     let _ = connected_unknown.save("connected_unknown.png");
 
-    watershed(img, connected_unknown);
+    let answer = watershed(img, connected_unknown);
+
+    let _ = answer.save("watershed.png");
 
     //https://www.geeksforgeeks.org/computer-vision/image-segmentation-with-watershed-algorithm-opencv-python/
     //https://github.com/opencv/opencv/blob/b1d75bf477e77373b420d31ddf36709c0907dd32/modules/imgproc/src/segmentation.cpp#L88
@@ -112,7 +114,8 @@ const IN_QUEUE: i32 = -2;
 const WSHED: i32 = -1;
 const NQ: i32 = 256;
 
-fn watershed(_src: DynamicImage, _markers: ImageBuffer<Luma<u8>, Vec<u8>>) {
+fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> GrayImage {
+    let mut copy = markers.clone();
     let size = (_src.width(), _src.height());
 
     let mut storage: Vec<WSNode> = Vec::new();
@@ -126,7 +129,21 @@ fn watershed(_src: DynamicImage, _markers: ImageBuffer<Luma<u8>, Vec<u8>>) {
 
     let mut subs_tab: [i32; 512] = [0; 512];
 
+    for i in 0..256 {
+        subs_tab[i] = 0;
+    }
+    for i in 256..512 {
+        subs_tab[i] = (i - 256).try_into().unwrap();
+    }
+
     println!("{}", subs_tab.len());
+
+    for i in 0..copy.width() {
+        copy.put_pixel(i, 0, Luma([255]));
+        copy.put_pixel(i, copy.height()-1, Luma([255]));
+    }
+
+    copy
 }
 
 fn ws_max(a: i32, b: i32, subs_tab: [i32; 512]) -> i32 {
