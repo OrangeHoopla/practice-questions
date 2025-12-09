@@ -1,5 +1,5 @@
-use std::collections::HashMap;
-
+use std::collections::BinaryHeap;
+use std::cmp::Ordering;
 use image::{DynamicImage, GrayImage, ImageBuffer, Luma, open};
 use imageproc::{
     contrast::{ThresholdType, otsu_level, threshold},
@@ -7,7 +7,32 @@ use imageproc::{
     morphology::{Mask, dilate, grayscale_open},
     region_labelling::connected_components,
 };
-use rand::Rng;
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+struct State {
+    cost: usize,
+    position: usize,
+}
+
+// The priority queue depends on `Ord`.
+// Explicitly implement the trait so the queue becomes a min-heap
+// instead of a max-heap.
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Notice that we flip the ordering on costs.
+        // In case of a tie we compare positions - this step is necessary
+        // to make implementations of `PartialEq` and `Ord` consistent.
+        other.cost.cmp(&self.cost)
+            .then_with(|| self.position.cmp(&other.position))
+    }
+}
+
+// `PartialOrd` needs to be implemented as well.
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
 fn main() {
     println!("Starting");
@@ -48,6 +73,7 @@ fn main() {
 
     let unknown = diff(&sure, &foreground);
     let _ = unknown.save("unknown.png");
+
 
     let background_color = Luma([155u8]);
     let connected = connected_components(
@@ -92,9 +118,9 @@ fn diff_zero(minuend: &ImageBuffer<Luma<u32>, Vec<u32>>, subtrahend: &GrayImage)
         ImageBuffer::new(minuend.width(), minuend.height());
 
     for (x, y, pixel) in minuend.enumerate_pixels() {
-        let wow = subtrahend.get_pixel(x, y)[0];
+        let sub = subtrahend.get_pixel(x, y)[0];
 
-        if wow > 0 {
+        if sub > 0 {
             out.put_pixel(x, y, Luma([0]));
         } else {
             out.put_pixel(x, y, Luma([pixel[0].try_into().unwrap()]));
@@ -115,6 +141,10 @@ const WSHED: i32 = -1;
 const NQ: i32 = 256;
 
 fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> GrayImage {
+
+    let mut priority_queue: BinaryHeap<State> = BinaryHeap::new();
+    // priority_queue.push(State { cost: 0, position: 0 });
+
     let mut copy = markers.clone();
     let size = (_src.width(), _src.height());
 
@@ -138,10 +168,19 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
 
     println!("{}", subs_tab.len());
 
+    // width perimeter
     for i in 0..copy.width() {
         copy.put_pixel(i, 0, Luma([255]));
         copy.put_pixel(i, copy.height()-1, Luma([255]));
     }
+
+    // height perimeter
+    for i in 0..copy.height() {
+        copy.put_pixel(0, i, Luma([255]));
+        copy.put_pixel(copy.width()-1, i, Luma([255]));
+    }
+
+
 
     copy
 }
