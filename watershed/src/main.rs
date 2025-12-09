@@ -208,6 +208,7 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
                 copy.get_pixel(j+1, i).0[0] > 0 || 
                 copy.get_pixel(j-1, i).0[0] > 0) 
             {
+                // the lower the priority the sooner it gets addressed
                 let mut priority: u8 = 255;
                 let mut holder:u8 = 255;
 
@@ -246,9 +247,13 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
 
     }
     // next step
-    println!("{}", priority_queue.len());
+    // println!("{}", priority_queue.len());
 
-    priority_queue.iter().for_each(|x| copy.put_pixel(x.position.0, x.position.1, Luma([255])));
+    // println!("{:?}", priority_queue.pop());
+    
+    // visualization tool
+    // priority_queue.iter().for_each(|x| copy.put_pixel(x.position.0, x.position.1, Luma([255])));
+
 
     // setting
 
