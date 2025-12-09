@@ -1,6 +1,6 @@
 use std::collections::BinaryHeap;
 use std::cmp::Ordering;
-use image::{DynamicImage, GrayImage, ImageBuffer, Luma, open};
+use image::{DynamicImage, GrayImage, ImageBuffer, Luma, Rgb, open};
 use imageproc::{
     contrast::{ThresholdType, otsu_level, threshold},
     distance_transform::{Norm, distance_transform},
@@ -10,8 +10,8 @@ use imageproc::{
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 struct State {
-    cost: usize,
-    position: usize,
+    cost: u8,
+    position: (u32,u32),
 }
 
 // The priority queue depends on `Ord`.
@@ -83,7 +83,9 @@ fn main() {
     );
 
     let connected_unknown = diff_zero(&connected, &unknown);
-    let _ = connected_unknown.save("connected_unknown.png");
+    let _ = connected_unknown.save("connected_unknown.png"); // this is the mask to be feed into the watershed
+    
+    // println!("{:?}", connected_unknown.get_pixel(0, 0));
 
     let answer = watershed(img, connected_unknown);
 
@@ -140,22 +142,30 @@ const IN_QUEUE: i32 = -2;
 const WSHED: i32 = -1;
 const NQ: i32 = 256;
 
+
+/**
+ * The background is a group(1) the unknown is a blur around the part we are fighting over
+ * anything that is 0 is considered unknown
+ * we use the diff in the actual image contrast to determine what group it goes to
+ * 
+ */
 fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> GrayImage {
 
     let mut priority_queue: BinaryHeap<State> = BinaryHeap::new();
     // priority_queue.push(State { cost: 0, position: 0 });
 
     let mut copy = markers.clone();
-    let size = (_src.width(), _src.height());
+    let img = _src.to_rgb8();
+    // let size = (_src.width(), _src.height());
 
-    let mut storage: Vec<WSNode> = Vec::new();
-    let free_node = 0;
-    let node = 0;
-    let mut queue: Vec<WSNode> = Vec::new();
+    // let mut storage: Vec<WSNode> = Vec::new();
+    // let free_node = 0;
+    // let node = 0;
+    // let mut queue: Vec<WSNode> = Vec::new();
 
-    let mut db: i32;
-    let mut dg: i32;
-    let mut dr: i32;
+    // let mut db: i32;
+    // let mut dg: i32;
+    // let mut dr: i32;
 
     let mut subs_tab: [i32; 512] = [0; 512];
 
@@ -166,7 +176,9 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
         subs_tab[i] = (i - 256).try_into().unwrap();
     }
 
-    println!("{}", subs_tab.len());
+    
+
+    // println!("{}", subs_tab.len());
 
     // width perimeter
     for i in 0..copy.width() {
@@ -180,19 +192,90 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
         copy.put_pixel(copy.width()-1, i, Luma([255]));
     }
 
+    // initial phase: put all the neighbor pixels of each marker to the ordered queue -
+    // determine the initial boundaries of the basins
+    for i in 1..copy.height()-1 {
+        for j in 1..copy.width()-1 {
+
+            if copy.get_pixel(j, i).0[0] < (0 as u8) {
+                copy.put_pixel(j, i,Luma([0]));
+            }
+
+            // checks surrounding pixels to see if around a group
+            if  copy.get_pixel(j, i).0[0] == 0 && 
+                (copy.get_pixel(j, i+1).0[0] > 0 || 
+                copy.get_pixel(j, i-1).0[0] > 0 || 
+                copy.get_pixel(j+1, i).0[0] > 0 || 
+                copy.get_pixel(j-1, i).0[0] > 0) 
+            {
+                let mut priority: u8 = 255;
+                let mut holder:u8 = 255;
+
+                if copy.get_pixel(j, i+1).0[0] > 0 {
+                    holder = pixel_diff(img.get_pixel(j, i+1).clone(), img.get_pixel(j, i).clone());
+                    priority = std::cmp::min(holder, priority);
+                }
+                if copy.get_pixel(j, i-1).0[0] > 0 {
+
+                    holder = pixel_diff(img.get_pixel(j, i-1).clone(), img.get_pixel(j, i).clone());
+                    priority = std::cmp::min(holder, priority);
+                    
+                }
+                if copy.get_pixel(j+1, i).0[0] > 0 {
+
+                    holder = pixel_diff(img.get_pixel(j+1, i).clone(), img.get_pixel(j, i).clone());
+                    priority = std::cmp::min(holder, priority);
+                    
+                }
+                if copy.get_pixel(j-1, i).0[0] > 0 {
+
+                    holder = pixel_diff(img.get_pixel(j-1, i).clone(), img.get_pixel(j, i).clone());
+                    priority = std::cmp::min(holder, priority);
+                    
+                }
+                // add to queue
+                priority_queue.push(State {cost: priority, position: (j,i)});
+                // copy.put_pixel(j, i, Luma([255]));
+                // need to designate pixel in queue
+                
+
+            }
+
+        }
+        // next step
+
+    }
+    // next step
+    println!("{}", priority_queue.len());
+
+    priority_queue.iter().for_each(|x| copy.put_pixel(x.position.0, x.position.1, Luma([255])));
+
+    // setting
+
 
 
     copy
 }
 
-fn ws_max(a: i32, b: i32, subs_tab: [i32; 512]) -> i32 {
-    let index: usize = ((a) - (b) + NQ).try_into().unwrap();
-    b + subs_tab[index]
-}
+// fn ws_max(a: i32, b: i32, subs_tab: [i32; 512]) -> i32 {
+//     let index: usize = ((a) - (b) + NQ).try_into().unwrap();
+//     b + subs_tab[index]
+// }
 
-fn ws_min(a: i32, b: i32, subs_tab: [i32; 512]) -> i32 {
-    let index: usize = ((a) - (b) + NQ).try_into().unwrap();
-    a - subs_tab[index]
+// fn ws_min(a: i32, b: i32, subs_tab: [i32; 512]) -> i32 {
+//     let index: usize = ((a) - (b) + NQ).try_into().unwrap();
+//     a - subs_tab[index]
+// }
+
+fn pixel_diff(a: Rgb<u8>, b: Rgb<u8>) -> u8{
+    let db = a.0[0].abs_diff(b.0[0]);
+    let dg = a.0[1].abs_diff(b.0[1]);
+    let dr = a.0[2].abs_diff(b.0[2]);
+    let diff = std::cmp::max(db, dg);
+    
+    std::cmp::max(diff, dr)
+
+
 }
 
 // let mut rgb_image = ImageBuffer::new(connected.width(), connected.height());
