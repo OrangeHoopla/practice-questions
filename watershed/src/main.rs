@@ -138,8 +138,7 @@ struct WSNode {
     img_ofs: i32,
 }
 
-const IN_QUEUE: i32 = -2;
-const WSHED: i32 = -1;
+
 const NQ: i32 = 256;
 
 
@@ -154,8 +153,13 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
     let mut priority_queue: BinaryHeap<State> = BinaryHeap::new();
     // priority_queue.push(State { cost: 0, position: 0 });
 
-    let mut copy = markers.clone();
+
+    let mut copy: ImageBuffer<Luma<u8>, Vec<u8>> = markers.clone().try_into().unwrap();
+    println!( "{:?}", markers.get_pixel(0, 0));
     let img = _src.to_rgb8();
+
+    let in_queue: u8 = 254;
+    let wshed: u8 = 255;
     // let size = (_src.width(), _src.height());
 
     // let mut storage: Vec<WSNode> = Vec::new();
@@ -182,14 +186,14 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
 
     // width perimeter
     for i in 0..copy.width() {
-        copy.put_pixel(i, 0, Luma([255]));
-        copy.put_pixel(i, copy.height()-1, Luma([255]));
+        copy.put_pixel(i, 0, Luma([wshed]));
+        copy.put_pixel(i, copy.height()-1, Luma([wshed]));
     }
 
     // height perimeter
     for i in 0..copy.height() {
-        copy.put_pixel(0, i, Luma([255]));
-        copy.put_pixel(copy.width()-1, i, Luma([255]));
+        copy.put_pixel(0, i, Luma([wshed]));
+        copy.put_pixel(copy.width()-1, i, Luma([wshed]));
     }
 
     // initial phase: put all the neighbor pixels of each marker to the ordered queue -
@@ -197,38 +201,39 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
     for i in 1..copy.height()-1 {
         for j in 1..copy.width()-1 {
 
-            if copy.get_pixel(j, i).0[0] < (0 as u8) {
+            // making sure nothing in queue
+            if (copy.get_pixel(j, i).0[0] < (0 as u8)) || (copy.get_pixel(j, i).0[0] > 253) {
                 copy.put_pixel(j, i,Luma([0]));
             }
 
             // checks surrounding pixels to see if around a group
             if  copy.get_pixel(j, i).0[0] == 0 && 
-                (copy.get_pixel(j, i+1).0[0] > 0 || 
-                copy.get_pixel(j, i-1).0[0] > 0 || 
-                copy.get_pixel(j+1, i).0[0] > 0 || 
-                copy.get_pixel(j-1, i).0[0] > 0) 
+                (((copy.get_pixel(j, i+1).0[0] > 0) && (copy.get_pixel(j, i+1).0[0] < 254)) || 
+                ((copy.get_pixel(j, i-1).0[0] > 0) && (copy.get_pixel(j, i-1).0[0] < 254)) || 
+                ((copy.get_pixel(j+1, i).0[0] > 0) && (copy.get_pixel(j+1, i).0[0] < 254)) || 
+                ((copy.get_pixel(j-1, i).0[0] > 0) && (copy.get_pixel(j-1, i).0[0] < 254))) 
             {
                 // the lower the priority the sooner it gets addressed
                 let mut priority: u8 = 255;
                 let mut holder:u8 = 255;
 
-                if copy.get_pixel(j, i+1).0[0] > 0 {
+                if (copy.get_pixel(j, i+1).0[0] > 0) && (copy.get_pixel(j, i+1).0[0] < 254) {
                     holder = pixel_diff(img.get_pixel(j, i+1).clone(), img.get_pixel(j, i).clone());
                     priority = std::cmp::min(holder, priority);
                 }
-                if copy.get_pixel(j, i-1).0[0] > 0 {
+                if (copy.get_pixel(j, i-1).0[0] > 0) && (copy.get_pixel(j, i-1).0[0] < 254) {
 
                     holder = pixel_diff(img.get_pixel(j, i-1).clone(), img.get_pixel(j, i).clone());
                     priority = std::cmp::min(holder, priority);
                     
                 }
-                if copy.get_pixel(j+1, i).0[0] > 0 {
+                if (copy.get_pixel(j+1, i).0[0] > 0) && (copy.get_pixel(j+1, i).0[0] < 254) {
 
                     holder = pixel_diff(img.get_pixel(j+1, i).clone(), img.get_pixel(j, i).clone());
                     priority = std::cmp::min(holder, priority);
                     
                 }
-                if copy.get_pixel(j-1, i).0[0] > 0 {
+                if (copy.get_pixel(j-1, i).0[0] > 0) && (copy.get_pixel(j-1, i).0[0] < 254) {
 
                     holder = pixel_diff(img.get_pixel(j-1, i).clone(), img.get_pixel(j, i).clone());
                     priority = std::cmp::min(holder, priority);
@@ -236,20 +241,97 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
                 }
                 // add to queue
                 priority_queue.push(State {cost: priority, position: (j,i)});
-                // copy.put_pixel(j, i, Luma([255]));
+                copy.put_pixel(j, i, Luma([in_queue])); //3722 or 3627
                 // need to designate pixel in queue
                 
 
             }
 
         }
-        // next step
+        
 
     }
+
     // next step
     // println!("{}", priority_queue.len());
+    // let mut current: State = State { cost: 12, position: (0,0) };
 
-    // println!("{:?}", priority_queue.pop());
+    while !priority_queue.is_empty() {
+        let mut current = priority_queue.pop().unwrap();
+        let mut lab = 0;
+        let mut t;
+
+        //left
+        t = copy.get_pixel(current.position.0-1, current.position.1).0[0];
+        if t > 0 && t < 254 {
+            lab = t;
+        }
+        //right
+        t = copy.get_pixel(current.position.0+1, current.position.1).0[0];
+        if t > 0 && t < 254 {
+            if lab == 0 {lab=t;}
+            else if t != lab {lab=wshed;}
+        }
+        //top
+        t = copy.get_pixel(current.position.0, current.position.1-1).0[0];
+        if t > 0 && t < 254 {
+            if lab == 0 {lab=t;}
+            else if t != lab {lab=wshed;}
+        }
+        //bottom
+        t = copy.get_pixel(current.position.0, current.position.1+1).0[0];
+        if t > 0 && t < 254 {
+            if lab == 0 {lab=t;}
+            else if t != lab {lab=wshed;}
+        }
+
+        copy.put_pixel(current.position.0, current.position.1, Luma([lab]));
+
+        // halfway
+        if lab == wshed {continue;}
+
+        //left
+        if copy.get_pixel(current.position.0-1, current.position.1).0[0] == 0 {
+
+            let holder = pixel_diff(img.get_pixel(current.position.0-1, current.position.1).clone(), 
+                                img.get_pixel(current.position.0, current.position.1).clone());
+            
+            priority_queue.push(State { cost: holder, position: (current.position.0-1, current.position.1) });
+            copy.put_pixel(current.position.0-1, current.position.1, Luma([in_queue]));
+        }
+        //right
+        if copy.get_pixel(current.position.0+1, current.position.1).0[0] == 0 {
+
+            let holder = pixel_diff(img.get_pixel(current.position.0+1, current.position.1).clone(), 
+                                img.get_pixel(current.position.0, current.position.1).clone());
+            
+            priority_queue.push(State { cost: holder, position: (current.position.0+1, current.position.1) });
+            copy.put_pixel(current.position.0+1, current.position.1, Luma([in_queue]));
+        }
+        //top
+        if copy.get_pixel(current.position.0, current.position.1-1).0[0] == 0 {
+
+            let holder = pixel_diff(img.get_pixel(current.position.0, current.position.1-1).clone(), 
+                                img.get_pixel(current.position.0, current.position.1).clone());
+            
+            priority_queue.push(State { cost: holder, position: (current.position.0, current.position.1-1) });
+            copy.put_pixel(current.position.0, current.position.1-1, Luma([in_queue]));
+        }
+        //bottom
+        if copy.get_pixel(current.position.0, current.position.1+1).0[0] == 0 {
+
+            let holder = pixel_diff(img.get_pixel(current.position.0, current.position.1+1).clone(), 
+                                img.get_pixel(current.position.0, current.position.1).clone());
+            
+            priority_queue.push(State { cost: holder, position: (current.position.0, current.position.1+1) });
+
+            copy.put_pixel(current.position.0, current.position.1+1, Luma([in_queue]));
+        }
+    }
+
+    // println!("{:?}", current);
+
+    println!("{:?}", priority_queue.len());
     
     // visualization tool
     // priority_queue.iter().for_each(|x| copy.put_pixel(x.position.0, x.position.1, Luma([255])));
