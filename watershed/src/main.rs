@@ -1,4 +1,5 @@
-use std::collections::BinaryHeap;
+use std::time::UNIX_EPOCH;
+use std::{collections::BinaryHeap, time::SystemTime};
 use std::cmp::Ordering;
 use image::{DynamicImage, GrayImage, ImageBuffer, Luma, Rgb, open};
 use imageproc::{
@@ -87,7 +88,12 @@ fn main() {
     
     // println!("{:?}", connected_unknown.get_pixel(0, 0));
 
-    let answer = watershed(img, connected_unknown);
+    let start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    let answer = watershed(img, connected_unknown); //main
+    let end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+
+    let total = end-start;
+    println!("{:?}",total);
 
     let _ = answer.save("watershed.png");
 
@@ -132,15 +138,6 @@ fn diff_zero(minuend: &ImageBuffer<Luma<u32>, Vec<u32>>, subtrahend: &GrayImage)
     out
 }
 
-struct WSNode {
-    next: i32,
-    mask_ofs: i32,
-    img_ofs: i32,
-}
-
-
-const NQ: i32 = 256;
-
 
 /**
  * The background is a group(1) the unknown is a blur around the part we are fighting over
@@ -160,25 +157,6 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
 
     let in_queue: u8 = 254;
     let wshed: u8 = 255;
-    // let size = (_src.width(), _src.height());
-
-    // let mut storage: Vec<WSNode> = Vec::new();
-    // let free_node = 0;
-    // let node = 0;
-    // let mut queue: Vec<WSNode> = Vec::new();
-
-    // let mut db: i32;
-    // let mut dg: i32;
-    // let mut dr: i32;
-
-    let mut subs_tab: [i32; 512] = [0; 512];
-
-    for i in 0..256 {
-        subs_tab[i] = 0;
-    }
-    for i in 256..512 {
-        subs_tab[i] = (i - 256).try_into().unwrap();
-    }
 
     
 
@@ -191,14 +169,13 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
     }
 
     // height perimeter
-    for i in 0..copy.height() {
-        copy.put_pixel(0, i, Luma([wshed]));
-        copy.put_pixel(copy.width()-1, i, Luma([wshed]));
-    }
+
 
     // initial phase: put all the neighbor pixels of each marker to the ordered queue -
     // determine the initial boundaries of the basins
     for i in 1..copy.height()-1 {
+        copy.put_pixel(0, i, Luma([wshed]));
+        copy.put_pixel(copy.width()-1, i, Luma([wshed]));
         for j in 1..copy.width()-1 {
 
             // making sure nothing in queue
@@ -247,7 +224,9 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
 
             }
 
+
         }
+        
         
 
     }
@@ -255,9 +234,10 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
     // next step
     // println!("{}", priority_queue.len());
     // let mut current: State = State { cost: 12, position: (0,0) };
-
+    let mut i = 0;
     while !priority_queue.is_empty() {
-        let mut current = priority_queue.pop().unwrap();
+        i += 1;
+        let current = priority_queue.pop().unwrap();
         let mut lab = 0;
         let mut t;
 
@@ -327,6 +307,10 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
 
             copy.put_pixel(current.position.0, current.position.1+1, Luma([in_queue]));
         }
+        if i % 30 == 0 {
+            let _ = copy.save(format!("gif1/{}.png", i));
+        }
+
     }
 
     // println!("{:?}", current);
