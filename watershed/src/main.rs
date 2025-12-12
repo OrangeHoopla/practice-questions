@@ -158,10 +158,6 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
     let in_queue: u8 = 254;
     let wshed: u8 = 255;
 
-    
-
-    // println!("{}", subs_tab.len());
-
     // width perimeter
     for i in 0..copy.width() {
         copy.put_pixel(i, 0, Luma([wshed]));
@@ -315,7 +311,7 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
 
     // println!("{:?}", current);
 
-    println!("{:?}", priority_queue.len());
+    // println!("{:?}", priority_queue.len());
     
     // visualization tool
     // priority_queue.iter().for_each(|x| copy.put_pixel(x.position.0, x.position.1, Luma([255])));
@@ -328,15 +324,6 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
     copy
 }
 
-// fn ws_max(a: i32, b: i32, subs_tab: [i32; 512]) -> i32 {
-//     let index: usize = ((a) - (b) + NQ).try_into().unwrap();
-//     b + subs_tab[index]
-// }
-
-// fn ws_min(a: i32, b: i32, subs_tab: [i32; 512]) -> i32 {
-//     let index: usize = ((a) - (b) + NQ).try_into().unwrap();
-//     a - subs_tab[index]
-// }
 
 fn pixel_diff(a: Rgb<u8>, b: Rgb<u8>) -> u8{
     let db = a.0[0].abs_diff(b.0[0]);
@@ -349,24 +336,3 @@ fn pixel_diff(a: Rgb<u8>, b: Rgb<u8>) -> u8{
 
 }
 
-// let mut rgb_image = ImageBuffer::new(connected.width(), connected.height());
-// let mut color_map: HashMap<u32, [u8; 3]> = HashMap::new();
-// color_map.insert(1, [0,0,0]);
-// let mut rng = rand::rng();
-
-// for i in 2..30 { // random map of colors
-//         color_map.insert(i, [rng.random_range(1..=254),rng.random_range(1..=254),rng.random_range(1..=254)]);
-//     }
-
-// // Iterate through Luma pixels and convert to RGB
-// for (x, y, pixel) in connected.enumerate_pixels() {
-//     let luma_value = pixel[0]; // Luma pixels have one channel
-//     // Create an Rgb pixel where R, G, and B are all the luma value
-//     let rgb_pixel: Luma<u8> = Luma([luma_value.try_into().unwrap()]);
-//     // let rgb_pixel: Rgb<u8> = Rgb(*color_map.get(&pixel[0]).unwrap());
-
-//     // Set the pixel in the new RGB image
-//     rgb_image.put_pixel(x, y, rgb_pixel);
-// }
-
-// let _ = rgb_image.save("connected.png");
