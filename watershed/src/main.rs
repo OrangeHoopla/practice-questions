@@ -124,7 +124,6 @@ fn diff(minuend: &GrayImage, subtrahend: &GrayImage) -> GrayImage {
 fn diff_zero(minuend: &ImageBuffer<Luma<u32>, Vec<u32>>, subtrahend: &GrayImage) -> GrayImage {
     let mut out: ImageBuffer<Luma<u8>, Vec<u8>> =
         ImageBuffer::new(minuend.width(), minuend.height());
-
     for (x, y, pixel) in minuend.enumerate_pixels() {
         let sub = subtrahend.get_pixel(x, y)[0];
 
@@ -138,6 +137,15 @@ fn diff_zero(minuend: &ImageBuffer<Luma<u32>, Vec<u32>>, subtrahend: &GrayImage)
     out
 }
 
+fn pixel_diff(a: Rgb<u8>, b: Rgb<u8>) -> u8{
+
+    let db = a.0[0].abs_diff(b.0[0]);
+    let dg = a.0[1].abs_diff(b.0[1]);
+    let dr = a.0[2].abs_diff(b.0[2]);
+    let diff = std::cmp::max(db, dg);
+    std::cmp::max(diff, dr)
+}
+
 
 /**
  * The background is a group(1) the unknown is a blur around the part we are fighting over
@@ -145,15 +153,11 @@ fn diff_zero(minuend: &ImageBuffer<Luma<u32>, Vec<u32>>, subtrahend: &GrayImage)
  * we use the diff in the actual image contrast to determine what group it goes to
  * 
  */
-fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> GrayImage {
+fn watershed(src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> GrayImage {
 
     let mut priority_queue: BinaryHeap<Pixel> = BinaryHeap::new();
-    // priority_queue.push(State { cost: 0, position: 0 });
-
-
     let mut copy: ImageBuffer<Luma<u8>, Vec<u8>> = markers.clone().try_into().unwrap();
-    println!( "{:?}", markers.get_pixel(0, 0));
-    let img = _src.to_rgb8();
+    let img = src.to_rgb8();
 
     let in_queue: u8 = 254;
     let wshed: u8 = 255;
@@ -164,9 +168,6 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
         copy.put_pixel(i, copy.height()-1, Luma([wshed]));
     }
 
-    // height perimeter
-
-
     // initial phase: put all the neighbor pixels of each marker to the ordered queue -
     // determine the initial boundaries of the basins
     for i in 1..copy.height()-1 {
@@ -174,7 +175,7 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
         copy.put_pixel(copy.width()-1, i, Luma([wshed]));
         for j in 1..copy.width()-1 {
 
-            // making sure nothing in queue
+            // this needs to be fixed
             if (copy.get_pixel(j, i).0[0] < (0 as u8)) || (copy.get_pixel(j, i).0[0] > 253) {
                 copy.put_pixel(j, i,Luma([0]));
             }
@@ -188,7 +189,7 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
             {
                 // the lower the priority the sooner it gets addressed
                 let mut priority: u8 = 255;
-                let mut holder:u8 = 255;
+                let mut holder:u8;
 
                 if (copy.get_pixel(j, i+1).0[0] > 0) && (copy.get_pixel(j, i+1).0[0] < 254) {
                     holder = pixel_diff(img.get_pixel(j, i+1).clone(), img.get_pixel(j, i).clone());
@@ -227,12 +228,9 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
 
     }
 
-    // next step
-    // println!("{}", priority_queue.len());
-    // let mut current: State = State { cost: 12, position: (0,0) };
-    let mut i = 0;
+    // iterating through priority queue until empty
     while !priority_queue.is_empty() {
-        i += 1;
+
         let current = priority_queue.pop().unwrap();
         let mut lab = 0;
         let mut t;
@@ -303,36 +301,10 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
 
             copy.put_pixel(current.position.0, current.position.1+1, Luma([in_queue]));
         }
-        if i % 30 == 0 {
-            let _ = copy.save(format!("gif1/{}.png", i));
-        }
 
     }
-
-    // println!("{:?}", current);
-
-    // println!("{:?}", priority_queue.len());
-    
-    // visualization tool
-    // priority_queue.iter().for_each(|x| copy.put_pixel(x.position.0, x.position.1, Luma([255])));
-
-
-    // setting
-
-
 
     copy
 }
 
-
-fn pixel_diff(a: Rgb<u8>, b: Rgb<u8>) -> u8{
-    let db = a.0[0].abs_diff(b.0[0]);
-    let dg = a.0[1].abs_diff(b.0[1]);
-    let dr = a.0[2].abs_diff(b.0[2]);
-    let diff = std::cmp::max(db, dg);
-    
-    std::cmp::max(diff, dr)
-
-
-}
 
