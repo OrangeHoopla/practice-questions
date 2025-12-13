@@ -10,7 +10,7 @@ use imageproc::{
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-struct State {
+struct Pixel {
     cost: u8,
     position: (u32,u32),
 }
@@ -18,7 +18,7 @@ struct State {
 // The priority queue depends on `Ord`.
 // Explicitly implement the trait so the queue becomes a min-heap
 // instead of a max-heap.
-impl Ord for State {
+impl Ord for Pixel {
     fn cmp(&self, other: &Self) -> Ordering {
         // Notice that we flip the ordering on costs.
         // In case of a tie we compare positions - this step is necessary
@@ -29,7 +29,7 @@ impl Ord for State {
 }
 
 // `PartialOrd` needs to be implemented as well.
-impl PartialOrd for State {
+impl PartialOrd for Pixel {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
@@ -147,7 +147,7 @@ fn diff_zero(minuend: &ImageBuffer<Luma<u32>, Vec<u32>>, subtrahend: &GrayImage)
  */
 fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> GrayImage {
 
-    let mut priority_queue: BinaryHeap<State> = BinaryHeap::new();
+    let mut priority_queue: BinaryHeap<Pixel> = BinaryHeap::new();
     // priority_queue.push(State { cost: 0, position: 0 });
 
 
@@ -213,7 +213,7 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
                     
                 }
                 // add to queue
-                priority_queue.push(State {cost: priority, position: (j,i)});
+                priority_queue.push(Pixel {cost: priority, position: (j,i)});
                 copy.put_pixel(j, i, Luma([in_queue])); //3722 or 3627
                 // need to designate pixel in queue
                 
@@ -272,7 +272,7 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
             let holder = pixel_diff(img.get_pixel(current.position.0-1, current.position.1).clone(), 
                                 img.get_pixel(current.position.0, current.position.1).clone());
             
-            priority_queue.push(State { cost: holder, position: (current.position.0-1, current.position.1) });
+            priority_queue.push(Pixel { cost: holder, position: (current.position.0-1, current.position.1) });
             copy.put_pixel(current.position.0-1, current.position.1, Luma([in_queue]));
         }
         //right
@@ -281,7 +281,7 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
             let holder = pixel_diff(img.get_pixel(current.position.0+1, current.position.1).clone(), 
                                 img.get_pixel(current.position.0, current.position.1).clone());
             
-            priority_queue.push(State { cost: holder, position: (current.position.0+1, current.position.1) });
+            priority_queue.push(Pixel { cost: holder, position: (current.position.0+1, current.position.1) });
             copy.put_pixel(current.position.0+1, current.position.1, Luma([in_queue]));
         }
         //top
@@ -290,7 +290,7 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
             let holder = pixel_diff(img.get_pixel(current.position.0, current.position.1-1).clone(), 
                                 img.get_pixel(current.position.0, current.position.1).clone());
             
-            priority_queue.push(State { cost: holder, position: (current.position.0, current.position.1-1) });
+            priority_queue.push(Pixel { cost: holder, position: (current.position.0, current.position.1-1) });
             copy.put_pixel(current.position.0, current.position.1-1, Luma([in_queue]));
         }
         //bottom
@@ -299,7 +299,7 @@ fn watershed(_src: DynamicImage, markers: ImageBuffer<Luma<u8>, Vec<u8>>) -> Gra
             let holder = pixel_diff(img.get_pixel(current.position.0, current.position.1+1).clone(), 
                                 img.get_pixel(current.position.0, current.position.1).clone());
             
-            priority_queue.push(State { cost: holder, position: (current.position.0, current.position.1+1) });
+            priority_queue.push(Pixel { cost: holder, position: (current.position.0, current.position.1+1) });
 
             copy.put_pixel(current.position.0, current.position.1+1, Luma([in_queue]));
         }
